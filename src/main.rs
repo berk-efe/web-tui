@@ -1,5 +1,5 @@
 // ANCHOR: all
-use std::{error::Error, io};
+use std::{error::Error, io, path::Components};
 
 use ratatui::{
     Terminal,
@@ -9,12 +9,17 @@ use ratatui::{
         execute,
         terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
     },
+    style::{Color, Style, Stylize},
+    text::{Line, Span, Text},
+    widgets::Paragraph,
 };
 
 mod app;
+mod helper;
 mod ui;
+
 use crate::{
-    app::{App, CurrentScreen, CurrentlyEditing},
+    app::{App, Component, CurrentScreen},
     ui::ui,
 };
 
@@ -56,14 +61,42 @@ fn main() -> Result<(), Box<dyn Error>> {
 // ANCHOR: run_app_all
 // ANCHOR: run_method_signature
 fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<bool> {
-    // ANCHOR_END: run_method_signature
-    // ANCHOR: ui_loop
+    app.components = vec![
+        // HOME
+        //
+        Component::new(
+            "  Home",
+            Paragraph::new(Text::from(vec![
+                Line::from(Span::styled("My Awesome App", Style::new().bold())),
+                Line::from(""), // blank line
+                Line::from("This application demonstrates how to build a "),
+                Line::from("terminal UI using the ratatui crate.  The text "),
+                Line::from("wraps automatically to the width of the block."),
+                Line::from(""),
+                Line::from(Span::styled("Features", Style::new().bold())),
+                Line::from(""),
+                Line::from("• Sidebar navigation"),
+                Line::from("• Responsive layout"),
+                Line::from(vec![
+                    Span::raw("• "),
+                    Span::styled("Rich text ", Style::new().bold()),
+                    Span::raw("with colours & styles"),
+                ]),
+                Line::from(""),
+                Line::from("Scroll down to read more…"),
+            ])),
+        ),
+        // ABOUT
+        //
+        Component::new("  About", Paragraph::new("About paragraph here!")),
+        // FUN
+        //
+        Component::new("  Fun", Paragraph::new("Fun page!")),
+    ];
+
     loop {
         terminal.draw(|f| ui(f, app))?;
-        // ANCHOR_END: ui_loop
 
-        // ANCHOR: event_poll
-        // ANCHOR: main_screen
         if let Event::Key(key) = event::read()? {
             if key.kind == event::KeyEventKind::Release {
                 // Skip events that are not KeyEventKind::Press
@@ -74,7 +107,24 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                     KeyCode::Char('e') => {
                         println!("Pressed 'e'");
                     }
-                    KeyCode::Char('q') => {}
+                    KeyCode::Char('q') => return Ok(true),
+                    KeyCode::Esc => app.current_screen = CurrentScreen::Sidebar,
+                    _ => {}
+                },
+
+                CurrentScreen::Sidebar => match key.code {
+                    KeyCode::Char('q') => return Ok(true),
+
+                    KeyCode::Up => app.sidebar_state.select_previous(),
+                    KeyCode::Down => app.sidebar_state.select_next(),
+                    KeyCode::Left => app.sidebar_state.select_first(),
+                    KeyCode::Right => app.sidebar_state.select_last(),
+
+                    KeyCode::Enter => {
+                        app.current_screen = CurrentScreen::Main;
+                        // app.current_component = app.sidebar_state
+                    }
+
                     _ => {}
                 },
                 // ANCHOR_END: main_screen

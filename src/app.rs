@@ -1,19 +1,35 @@
 // ANCHOR: all
 use std::collections::HashMap;
 
+use ratatui::widgets::{ListState, Paragraph};
+
 // ANCHOR: screen_modes
 pub enum CurrentScreen {
+    Start,
     Main,
+    Sidebar,
 }
-// ANCHOR_END: screen_modes
 
-// ANCHOR: currently_editing
+pub struct Component {
+    pub title: &'static str,
+    pub content: Paragraph<'static>,
+}
 
-// ANCHOR_END: currently_editing
+impl Component {
+    pub fn new(title: &'static str, content: Paragraph<'static>) -> Self {
+        Self {
+            title,
+            content: content,
+        }
+    }
+}
 
-// ANCHOR: app_fields
 pub struct App {
-    current_screen: CurrentScreen,
+    pub current_screen: CurrentScreen,
+    pub current_component: Option<Component>,
+    pub components: Vec<Component>,
+
+    pub sidebar_state: ListState,
 }
 // ANCHOR_END: app_fields
 
@@ -21,7 +37,11 @@ pub struct App {
 impl App {
     pub fn new() -> App {
         App {
-            current_screen: CurrentScreen::Main,
+            current_screen: CurrentScreen::Sidebar,
+            current_component: None,
+            components: Vec::new(),
+
+            sidebar_state: ListState::default(),
         }
     }
     // ANCHOR_END: impl_new

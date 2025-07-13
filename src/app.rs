@@ -10,7 +10,6 @@ use ratatui::{
 pub enum CurrentScreen {
     Start,
     Main,
-    Sidebar,
     Exiting,
 }
 
@@ -41,7 +40,7 @@ pub struct App {
 impl App {
     pub fn new() -> App {
         App {
-            current_screen: CurrentScreen::Sidebar,
+            current_screen: CurrentScreen::Start,
             current_component: None,
             components: Vec::new(),
 

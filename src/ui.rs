@@ -8,10 +8,34 @@ use ratatui::{
     widgets::{Block, Borders, Clear, List, ListItem, Padding, Paragraph, Wrap, block::Title},
 };
 
+use std::thread;
+use std::time::Duration;
+
 use crate::app::{App, CurrentScreen};
+use crate::helper::{FIRST_BOOT_TEXT_LIST};
 
 // ANCHOR: method_sig
 pub fn ui(frame: &mut Frame, app: &mut App) {
+    
+    if let CurrentScreen::Start = &app.current_screen {
+        let mut vec_text: Vec<Line> = Vec::new();
+
+        for i in FIRST_BOOT_TEXT_LIST {
+            let line_ = Line::from(i);
+            vec_text.push(line_);
+            
+            let text = Text::from(vec_text.clone());
+            let par = Paragraph::new(text);
+
+            frame.render_widget(par, frame.area());
+
+            // Simulate a delay to mimic the boot process
+            thread::sleep(Duration::from_millis(300));
+        }
+
+        return;
+    }
+
     const BG_COLOR_0: Color = Color::Rgb(0, 19, 45);
     const BG_COLOR_1: Color = Color::Rgb(0, 38, 87);
     const BG_COLOR_2: Color = Color::Rgb(0, 55, 126);
@@ -105,37 +129,20 @@ pub fn ui(frame: &mut Frame, app: &mut App) {
     // FOOTER
     //
 
-    let footer_chunks = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
-        .split(footer);
-
-    let info_text = match app.current_screen {
-        CurrentScreen::Main => Span::styled(" Main", Style::default()),
-        CurrentScreen::Sidebar => Span::styled(" Sidebar", Style::default()),
-        _ => Span::from(""),
-    };
-
     let key_hints = match app.current_screen {
-        CurrentScreen::Main => Span::styled(" (q)uit / ESC go back", Style::default()),
-        CurrentScreen::Sidebar => Span::styled(" (q)uit / Enter to select", Style::default()),
+        CurrentScreen::Main => {
+            Span::styled(" (q)uit / Tab: next / BackTab: prev", Style::default())
+        }
         _ => Span::from(""),
     };
-
-    let info_block = Block::default().borders(Borders::NONE).bg(BG_COLOR_1);
-    frame.render_widget(info_block, footer_chunks[0].inner(hor_space));
 
     let key_block = Block::default().borders(Borders::NONE).bg(BG_COLOR_1);
-    frame.render_widget(key_block, footer_chunks[1].inner(hor_space));
-
-    let info_p = Paragraph::new(Line::from(info_text));
+    frame.render_widget(key_block, footer.inner(hor_space));
 
     let key_p = Paragraph::new(Line::from(key_hints));
 
-    let centered_info_area = center_vertical(footer_chunks[0], 1);
-    let centered_key_area = center_vertical(footer_chunks[1], 1);
+    let centered_key_area = center_vertical(footer, 1);
 
-    frame.render_widget(info_p, centered_info_area.inner(hor_space));
     frame.render_widget(key_p, centered_key_area.inner(hor_space));
 }
 

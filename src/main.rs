@@ -91,53 +91,14 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
         ),
         // ABOUT
         //
-        Component::new(
-            "  About",
-            Text::from(vec![
-                Line::from(Span::styled("About page", Style::new().bold())),
-                Line::from(""),
-                Line::from("This application demonstrates how to build a "),
-                Line::from("terminal UI using the ratatui crate.  The text "),
-                Line::from("wraps automatically to the width of the block."),
-                Line::from(""),
-                Line::from(Span::styled("Features", Style::new().bold())),
-                Line::from(""),
-                Line::from("• Sidebar navigation"),
-                Line::from("• Responsive layout"),
-                Line::from(vec![
-                    Span::raw("• "),
-                    Span::styled("Rich text ", Style::new().bold()),
-                    Span::raw("with colours & styles"),
-                ]),
-                Line::from(""),
-                Line::from("Scroll down to read more…"),
-            ]),
-        ),
+        Component::new("  About", Text::from("  Hello")),
         // ETC
         //
-        Component::new(
-            "  ETC",
-            Text::from(vec![
-                Line::from(Span::styled("ETC Page", Style::new().bold())),
-                Line::from(""),
-                Line::from("This application demonstrates how to build a "),
-                Line::from("terminal UI using the ratatui crate.  The text "),
-                Line::from("wraps automatically to the width of the block."),
-                Line::from(""),
-                Line::from(Span::styled("Features", Style::new().bold())),
-                Line::from(""),
-                Line::from("• Sidebar navigation"),
-                Line::from("• Responsive layout"),
-                Line::from(vec![
-                    Span::raw("• "),
-                    Span::styled("Rich text ", Style::new().bold()),
-                    Span::raw("with colours & styles"),
-                ]),
-                Line::from(""),
-                Line::from("Scroll down to read more…"),
-            ]),
-        ),
+        Component::new("  ETC", Text::from("  Hi!")),
     ];
+
+    app.current_component = Some(0);
+    app.sidebar_state.select(Some(0));
 
     loop {
         terminal.draw(|f| ui(f, app))?;
@@ -151,31 +112,30 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                 continue;
             }
             match app.current_screen {
+                CurrentScreen::Start => match key.code {
+                    KeyCode::Char('q') => return Ok(true),
+                    KeyCode::Enter => app.current_screen = CurrentScreen::Main,
+
+                    _ => {}
+                },
+
                 CurrentScreen::Main => match key.code {
                     KeyCode::Char('e') => {
                         println!("Pressed 'e'");
                     }
                     KeyCode::Char('q') => return Ok(true),
-                    KeyCode::Esc => app.current_screen = CurrentScreen::Sidebar,
-                    _ => {}
-                },
-
-                CurrentScreen::Sidebar => match key.code {
-                    KeyCode::Char('q') => return Ok(true),
-
-                    KeyCode::Up => app.sidebar_state.select_previous(),
-                    KeyCode::Down => app.sidebar_state.select_next(),
-                    KeyCode::Left => app.sidebar_state.select_first(),
-                    KeyCode::Right => app.sidebar_state.select_last(),
-
-                    KeyCode::Enter => {
-                        app.current_screen = CurrentScreen::Main;
-                        if let Some(curr_comp_id) = app.sidebar_state.selected() {
-                            app.current_component = Some(curr_comp_id);
-                        }
+                    KeyCode::Tab => {
+                        app.sidebar_state.select_next();
+                        app.current_component = app.sidebar_state.selected();
                     }
+                    KeyCode::BackTab => {
+                        app.sidebar_state.select_previous();
+                        app.current_component = app.sidebar_state.selected();
+                    }
+
                     _ => {}
                 },
+
                 _ => {}
             }
         }

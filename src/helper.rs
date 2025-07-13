@@ -16,3 +16,12 @@ pub const FIRST_BOOT_TEXT_LIST: [&str; 13] = [
     ":: Copying rootfs image to RAM...",
 
 ];
+
+pub const SECOND_BOOT_TEXT_LIST: [&str; 4] = [
+    ":: Mounting '/dev/loop0' to '/run/archiso/airootfs'",
+    ":: Device '/dev/loop0' mounted successfully",
+    ":: running late hook [archiso_pxe_common]",
+    ":: running cleanup hook [udev]",
+];
+
+

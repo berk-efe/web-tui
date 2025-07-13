@@ -33,6 +33,7 @@ pub struct App {
     pub components: Vec<Component>,
 
     pub sidebar_state: ListState,
+    pub boot_index: usize,
 }
 // ANCHOR_END: app_fields
 
@@ -45,6 +46,7 @@ impl App {
             components: Vec::new(),
 
             sidebar_state: ListState::default(),
+            boot_index: 0,
         }
     }
     // ANCHOR_END: impl_new

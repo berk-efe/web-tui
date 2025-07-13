@@ -12,27 +12,29 @@ use std::thread;
 use std::time::Duration;
 
 use crate::app::{App, CurrentScreen};
-use crate::helper::{FIRST_BOOT_TEXT_LIST};
+use crate::helper::FIRST_BOOT_TEXT_LIST;
 
 // ANCHOR: method_sig
 pub fn ui(frame: &mut Frame, app: &mut App) {
-    
     if let CurrentScreen::Start = &app.current_screen {
-        let mut vec_text: Vec<Line> = Vec::new();
+        thread::sleep(Duration::from_millis(rand::random_range(50..250)));
 
-        for i in FIRST_BOOT_TEXT_LIST {
-            let line_ = Line::from(i);
-            vec_text.push(line_);
-            
-            let text = Text::from(vec_text.clone());
-            let par = Paragraph::new(text);
-
-            frame.render_widget(par, frame.area());
-
-            // Simulate a delay to mimic the boot process
-            thread::sleep(Duration::from_millis(300));
+        if app.boot_index >= FIRST_BOOT_TEXT_LIST.len() {
+            app.current_screen = CurrentScreen::Main;
+            return;
         }
 
+        let par = Paragraph::new(
+            FIRST_BOOT_TEXT_LIST
+                .iter()
+                .enumerate()
+                .filter(|(i, _)| *i <= app.boot_index)
+                .map(|(_, e)| Line::from(*e))
+                .collect::<Vec<_>>(),
+        );
+        frame.render_widget(par, frame.area());
+
+        app.boot_index += 1;
         return;
     }
 

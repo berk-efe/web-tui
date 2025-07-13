@@ -1,5 +1,5 @@
 // ANCHOR: all
-use std::{error::Error, io};
+use std::{error::Error, io, time::Duration};
 
 use ratatui::{
     Terminal,
@@ -106,37 +106,39 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
 
         // ANCHOR: event_poll
         // ANCHOR: main_screen
-        if let Event::Key(key) = event::read()? {
-            if key.kind == event::KeyEventKind::Release {
-                // Skip events that are not KeyEventKind::Press
-                continue;
-            }
-            match app.current_screen {
-                CurrentScreen::Start => match key.code {
-                    KeyCode::Char('q') => return Ok(true),
-                    KeyCode::Enter => app.current_screen = CurrentScreen::Main,
+        if event::poll(Duration::from_millis(0))? {
+            if let Event::Key(key) = event::read()? {
+                if key.kind == event::KeyEventKind::Release {
+                    // Skip events that are not KeyEventKind::Press
+                    continue;
+                }
+                match app.current_screen {
+                    CurrentScreen::Start => match key.code {
+                        KeyCode::Char('q') => return Ok(true),
+                        KeyCode::Enter => app.current_screen = CurrentScreen::Main,
+
+                        _ => {}
+                    },
+
+                    CurrentScreen::Main => match key.code {
+                        KeyCode::Char('e') => {
+                            println!("Pressed 'e'");
+                        }
+                        KeyCode::Char('q') => return Ok(true),
+                        KeyCode::Tab => {
+                            app.sidebar_state.select_next();
+                            app.current_component = app.sidebar_state.selected();
+                        }
+                        KeyCode::BackTab => {
+                            app.sidebar_state.select_previous();
+                            app.current_component = app.sidebar_state.selected();
+                        }
+
+                        _ => {}
+                    },
 
                     _ => {}
-                },
-
-                CurrentScreen::Main => match key.code {
-                    KeyCode::Char('e') => {
-                        println!("Pressed 'e'");
-                    }
-                    KeyCode::Char('q') => return Ok(true),
-                    KeyCode::Tab => {
-                        app.sidebar_state.select_next();
-                        app.current_component = app.sidebar_state.selected();
-                    }
-                    KeyCode::BackTab => {
-                        app.sidebar_state.select_previous();
-                        app.current_component = app.sidebar_state.selected();
-                    }
-
-                    _ => {}
-                },
-
-                _ => {}
+                }
             }
         }
         // ANCHOR_END: event_poll

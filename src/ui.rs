@@ -83,7 +83,16 @@ pub fn ui(frame: &mut Frame, app: &mut App) {
 
     // MAIN
     //
-    let main_paragraph = Paragraph::new(" Main content goes here…").block(
+
+    let mut _content: Text = Text::from("");
+
+    if let Some(curr_comp_id) = app.current_component {
+        let comp = &app.components[curr_comp_id];
+        _content = comp.content.clone();
+    } else {
+    }
+
+    let main_paragraph = Paragraph::new(_content).block(
         Block::default()
             .borders(Borders::TOP)
             .title(" main ")

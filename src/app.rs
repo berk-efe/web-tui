@@ -1,22 +1,26 @@
 // ANCHOR: all
 use std::collections::HashMap;
 
-use ratatui::widgets::{ListState, Paragraph};
+use ratatui::{
+    text::Text,
+    widgets::{ListState, Paragraph},
+};
 
 // ANCHOR: screen_modes
 pub enum CurrentScreen {
     Start,
     Main,
     Sidebar,
+    Exiting,
 }
 
 pub struct Component {
     pub title: &'static str,
-    pub content: Paragraph<'static>,
+    pub content: Text<'static>,
 }
 
 impl Component {
-    pub fn new(title: &'static str, content: Paragraph<'static>) -> Self {
+    pub fn new(title: &'static str, content: Text<'static>) -> Self {
         Self {
             title,
             content: content,
@@ -26,7 +30,7 @@ impl Component {
 
 pub struct App {
     pub current_screen: CurrentScreen,
-    pub current_component: Option<Component>,
+    pub current_component: Option<usize>,
     pub components: Vec<Component>,
 
     pub sidebar_state: ListState,

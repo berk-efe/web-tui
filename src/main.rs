@@ -1,5 +1,5 @@
 // ANCHOR: all
-use std::{error::Error, io, path::Components};
+use std::{error::Error, io};
 
 use ratatui::{
     Terminal,
@@ -9,7 +9,7 @@ use ratatui::{
         execute,
         terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
     },
-    style::{Color, Style, Stylize},
+    style::{Style, Stylize},
     text::{Line, Span, Text},
     widgets::Paragraph,
 };
@@ -61,14 +61,17 @@ fn main() -> Result<(), Box<dyn Error>> {
 // ANCHOR: run_app_all
 // ANCHOR: run_method_signature
 fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<bool> {
+    // ANCHOR_END: run_method_signature
+    // ANCHOR: ui_loop
+
     app.components = vec![
         // HOME
         //
         Component::new(
             "  Home",
-            Paragraph::new(Text::from(vec![
+            Text::from(vec![
                 Line::from(Span::styled("My Awesome App", Style::new().bold())),
-                Line::from(""), // blank line
+                Line::from(""),
                 Line::from("This application demonstrates how to build a "),
                 Line::from("terminal UI using the ratatui crate.  The text "),
                 Line::from("wraps automatically to the width of the block."),
@@ -84,19 +87,64 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                 ]),
                 Line::from(""),
                 Line::from("Scroll down to read more…"),
-            ])),
+            ]),
         ),
         // ABOUT
         //
-        Component::new("  About", Paragraph::new("About paragraph here!")),
-        // FUN
+        Component::new(
+            "  About",
+            Text::from(vec![
+                Line::from(Span::styled("About page", Style::new().bold())),
+                Line::from(""),
+                Line::from("This application demonstrates how to build a "),
+                Line::from("terminal UI using the ratatui crate.  The text "),
+                Line::from("wraps automatically to the width of the block."),
+                Line::from(""),
+                Line::from(Span::styled("Features", Style::new().bold())),
+                Line::from(""),
+                Line::from("• Sidebar navigation"),
+                Line::from("• Responsive layout"),
+                Line::from(vec![
+                    Span::raw("• "),
+                    Span::styled("Rich text ", Style::new().bold()),
+                    Span::raw("with colours & styles"),
+                ]),
+                Line::from(""),
+                Line::from("Scroll down to read more…"),
+            ]),
+        ),
+        // ETC
         //
-        Component::new("  Fun", Paragraph::new("Fun page!")),
+        Component::new(
+            "  ETC",
+            Text::from(vec![
+                Line::from(Span::styled("ETC Page", Style::new().bold())),
+                Line::from(""),
+                Line::from("This application demonstrates how to build a "),
+                Line::from("terminal UI using the ratatui crate.  The text "),
+                Line::from("wraps automatically to the width of the block."),
+                Line::from(""),
+                Line::from(Span::styled("Features", Style::new().bold())),
+                Line::from(""),
+                Line::from("• Sidebar navigation"),
+                Line::from("• Responsive layout"),
+                Line::from(vec![
+                    Span::raw("• "),
+                    Span::styled("Rich text ", Style::new().bold()),
+                    Span::raw("with colours & styles"),
+                ]),
+                Line::from(""),
+                Line::from("Scroll down to read more…"),
+            ]),
+        ),
     ];
 
     loop {
         terminal.draw(|f| ui(f, app))?;
+        // ANCHOR_END: ui_loop
 
+        // ANCHOR: event_poll
+        // ANCHOR: main_screen
         if let Event::Key(key) = event::read()? {
             if key.kind == event::KeyEventKind::Release {
                 // Skip events that are not KeyEventKind::Press
@@ -122,13 +170,12 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
 
                     KeyCode::Enter => {
                         app.current_screen = CurrentScreen::Main;
-                        // app.current_component = app.sidebar_state
+                        if let Some(curr_comp_id) = app.sidebar_state.selected() {
+                            app.current_component = Some(curr_comp_id);
+                        }
                     }
-
                     _ => {}
                 },
-                // ANCHOR_END: main_screen
-                // ANCHOR: exiting_screen
                 _ => {}
             }
         }

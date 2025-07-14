@@ -6,6 +6,8 @@ use ratatui::{
     widgets::{ListState, Paragraph},
 };
 
+use crate::helper;
+
 // ANCHOR: screen_modes
 pub enum CurrentScreen {
     Start,
@@ -34,6 +36,7 @@ pub struct App {
 
     pub sidebar_state: ListState,
     pub boot_index: usize,
+    pub boot_text_id: usize,
 }
 // ANCHOR_END: app_fields
 
@@ -47,6 +50,7 @@ impl App {
 
             sidebar_state: ListState::default(),
             boot_index: 0,
+            boot_text_id: 0,
         }
     }
     // ANCHOR_END: impl_new

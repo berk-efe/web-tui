@@ -12,26 +12,48 @@ use std::thread;
 use std::time::Duration;
 
 use crate::app::{App, CurrentScreen};
-use crate::helper::FIRST_BOOT_TEXT_LIST;
+use crate::helper::{FIRST_BOOT_TEXT_LIST, SECOND_BOOT_TEXT_LIST};
 
 // ANCHOR: method_sig
 pub fn ui(frame: &mut Frame, app: &mut App) {
     if let CurrentScreen::Start = &app.current_screen {
-        thread::sleep(Duration::from_millis(rand::random_range(50..250)));
+        if app.boot_text_id == 0 {
+            thread::sleep(Duration::from_millis(rand::random_range(50..200)));
+        } else {
+            thread::sleep(Duration::from_millis(rand::random_range(1..5)));
+        }
 
-        if app.boot_index >= FIRST_BOOT_TEXT_LIST.len() {
+        if app.boot_index >= FIRST_BOOT_TEXT_LIST.len() && app.boot_text_id == 0 {
+            app.boot_text_id += 1;
+            app.boot_index = 0;
+            thread::sleep(Duration::from_secs(2));
+        } else if app.boot_text_id == 1 && app.boot_index >= SECOND_BOOT_TEXT_LIST.len() {
             app.current_screen = CurrentScreen::Main;
-            return;
+        }
+
+        let mut cur_boot_text: &[&str] = &FIRST_BOOT_TEXT_LIST;
+
+        if app.boot_text_id == 1 {
+            cur_boot_text = &SECOND_BOOT_TEXT_LIST;
+        }
+
+        let view_height = frame.size().height as usize;
+        let mut y_offset = 0 as u16;
+
+        if app.boot_index >= view_height {
+            y_offset += (app.boot_index - view_height) as u16;
         }
 
         let par = Paragraph::new(
-            FIRST_BOOT_TEXT_LIST
+            cur_boot_text
                 .iter()
                 .enumerate()
                 .filter(|(i, _)| *i <= app.boot_index)
                 .map(|(_, e)| Line::from(*e))
                 .collect::<Vec<_>>(),
-        );
+        )
+        .scroll((y_offset, 0));
+
         frame.render_widget(par, frame.area());
 
         app.boot_index += 1;

@@ -1,147 +1,171 @@
-// ANCHOR: all
-use std::{error::Error, io};
+use std::{cell::RefCell, io, rc::Rc};
 
 use ratatui::{
-    Terminal,
-    backend::{Backend, CrosstermBackend},
-    crossterm::{
-        event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind},
-        execute,
-        terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
+    layout::{
+        Alignment, Constraint,
+        Direction::{Horizontal, Vertical},
+        Layout, Margin,
     },
-    style::{Style, Stylize},
-    text::{Line, Span, Text},
-    widgets::Paragraph,
+    style::{Color, Style, Stylize},
+    text::Line,
+    widgets::{Block, BorderType, Borders, List, ListItem, ListState, Paragraph},
+    Frame, Terminal,
 };
 
-mod app;
-mod helper;
-mod ui;
-
-use crate::{
-    app::{App, Component, CurrentScreen},
-    ui::ui,
+use ratzilla::{
+    event::{KeyCode, KeyEvent},
+    DomBackend, WebRenderer,
 };
 
-// ANCHOR: main_all
-// ANCHOR: setup_boilerplate
-fn main() -> Result<(), Box<dyn Error>> {
-    // setup terminal
-    enable_raw_mode()?;
-    let mut stderr = io::stderr(); // This is a special case. Normally using stdout is fine
-    execute!(stderr, EnterAlternateScreen, EnableMouseCapture)?;
-    // ANCHOR_END: setup_boilerplate
-    // ANCHOR: application_startup
-    let backend = CrosstermBackend::new(stderr);
-    let mut terminal = Terminal::new(backend)?;
+#[macro_export]
+macro_rules! margin {
+    ($n:expr) => {
+        Margin::new($n, $n)
+    };
 
-    // create app and run it
-    let mut app = App::new();
-    let res = run_app(&mut terminal, &mut app);
-    // ANCHOR_END: application_startup
+    ($h:expr, $v:expr) => {
+        Margin::new($h, $v)
+    };
+}
 
-    // ANCHOR: ending_boilerplate
-    // restore terminal
-    disable_raw_mode()?;
-    execute!(
-        terminal.backend_mut(),
-        LeaveAlternateScreen,
-        DisableMouseCapture
-    )?;
-    terminal.show_cursor()?;
-    // ANCHOR_END: ending_boilerplate
+fn main() -> io::Result<()> {
+    let backend = DomBackend::new()?;
+    let terminal = Terminal::new(backend)?;
 
-    // ANCHOR: final_print
+    let state = Rc::new(App::default());
+
+    let event_state = Rc::clone(&state);
+    terminal.on_key_event(move |key_event| {
+        event_state.handle_events(key_event);
+    });
+
+    let render_state = Rc::clone(&state);
+    terminal.draw_web(move |frame| {
+        render_state.render(frame);
+    });
 
     Ok(())
 }
-// ANCHOR_END: final_print
-// ANCHOR_END: main_all
 
-// ANCHOR: run_app_all
-// ANCHOR: run_method_signature
-fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<bool> {
-    // ANCHOR_END: run_method_signature
-    // ANCHOR: ui_loop
+#[derive(Default, PartialEq)]
+enum CurrentScreen {
+    Start,
+    #[default]
+    Main,
+    Demo,
+    Exiting,
+}
 
-    app.components = vec![
-        // HOME
-        //
-        Component::new(
-            "  Home",
-            Text::from(vec![
-                Line::from(Span::styled("My Awesome App", Style::new().bold())),
-                Line::from(""),
-                Line::from("This application demonstrates how to build a "),
-                Line::from("terminal UI using the ratatui crate.  The text "),
-                Line::from("wraps automatically to the width of the block."),
-                Line::from(""),
-                Line::from(Span::styled("Features", Style::new().bold())),
-                Line::from(""),
-                Line::from("• Sidebar navigation"),
-                Line::from("• Responsive layout"),
-                Line::from(vec![
-                    Span::raw("• "),
-                    Span::styled("Rich text ", Style::new().bold()),
-                    Span::raw("with colours & styles"),
-                ]),
-                Line::from(""),
-                Line::from("Scroll down to read more…"),
-            ]),
-        ),
-        // ABOUT
-        //
-        Component::new("  About", Text::from("  Hello")),
-        // ETC
-        //
-        Component::new("  ETC", Text::from("  Hi!")),
-    ];
+struct Page<'a> {
+    title: String,
+    content: Vec<Line<'a>>,
+}
 
-    app.current_component = Some(0);
-    app.sidebar_state.select(Some(0));
+#[derive(Default)]
+struct App {
+    counter: RefCell<u8>,
+    current_screen: CurrentScreen,
 
-    loop {
-        terminal.draw(|f| ui(f, app))?;
-        // ANCHOR_END: ui_loop
+    sidebar_state: ListState,
+}
 
-        // ANCHOR: event_poll
-        // ANCHOR: main_screen
-        if let Event::Key(key) = event::read()? {
-            if key.kind == event::KeyEventKind::Release {
-                // Skip events that are not KeyEventKind::Press
-                continue;
-            }
-            match app.current_screen {
-                CurrentScreen::Start => match key.code {
-                    KeyCode::Char('q') => return Ok(true),
-                    KeyCode::Enter => app.current_screen = CurrentScreen::Main,
+impl App {
+    fn render(&self, frame: &mut Frame) {
+        const BG_COLOR_0: Color = Color::Rgb(0, 19, 45);
+        const BG_COLOR_1: Color = Color::Rgb(0, 38, 87);
+        const BG_COLOR_2: Color = Color::Rgb(0, 55, 126);
 
-                    _ => {}
-                },
+        // MAIN
+        if self.current_screen == CurrentScreen::Main {
+            let block = Block::default().bg(BG_COLOR_0).borders(Borders::NONE);
 
-                CurrentScreen::Main => match key.code {
-                    KeyCode::Char('e') => {
-                        println!("Pressed 'e'");
-                    }
-                    KeyCode::Char('q') => return Ok(true),
-                    KeyCode::Tab => {
-                        app.sidebar_state.select_next();
-                        app.current_component = app.sidebar_state.selected();
-                    }
-                    KeyCode::BackTab => {
-                        app.sidebar_state.select_previous();
-                        app.current_component = app.sidebar_state.selected();
-                    }
+            frame.render_widget(block, frame.area());
 
-                    _ => {}
-                },
+            let chunks = Layout::default()
+                .direction(Vertical)
+                .vertical_margin(5)
+                .horizontal_margin(35)
+                .constraints([
+                    Constraint::Length(3),
+                    Constraint::Min(1),
+                    Constraint::Length(3),
+                ])
+                .split(frame.area());
 
+            let (header, body, footer) = (chunks[0], chunks[1], chunks[2]);
+
+            let header_block = Block::default().bg(BG_COLOR_1).borders(Borders::NONE);
+
+            let footer_block = Block::default().bg(BG_COLOR_1).borders(Borders::NONE);
+
+            frame.render_widget(header_block, header.inner(margin!(1, 0)));
+            frame.render_widget(footer_block, footer.inner(margin!(1, 0)));
+
+            let chunks = Layout::default()
+                .direction(Horizontal)
+                .constraints([Constraint::Length(25), Constraint::Min(1)])
+                .split(body);
+
+            let (sidebar, body) = (chunks[0], chunks[1]);
+
+            let sidebar_block = Block::default().bg(BG_COLOR_1).borders(Borders::NONE);
+
+            let body_block = Block::default().bg(BG_COLOR_1).borders(Borders::NONE);
+
+            frame.render_widget(sidebar_block, sidebar.inner(margin!(1, 1)));
+            frame.render_widget(body_block, body.inner(margin!(1, 1)));
+
+            // SIDEBAR
+            let mut sidebar_list_items: Vec<ListItem> = Vec::new();
+
+            // ADD MANUALLY FOR NOW
+            sidebar_list_items.push(ListItem::from("Item 1"));
+            sidebar_list_items.push(ListItem::from("Item 2"));
+            sidebar_list_items.push(ListItem::from("Item 3"));
+
+            let sidebar_list = List::new(sidebar_list_items)
+                .block(
+                    Block::default()
+                        .borders(Borders::TOP)
+                        .title("- components ")
+                        .title_alignment(Alignment::Left),
+                )
+                .highlight_style(Style::default().bg(BG_COLOR_2));
+
+            frame.render_widget(sidebar_list, sidebar.inner(margin!(2, 0)));
+
+            // MAIN
+
+            // ELSE
+        } else if self.current_screen == CurrentScreen::Demo {
+            let block = Block::bordered()
+                .title("web0")
+                .title_alignment(Alignment::Center)
+                .border_type(BorderType::Rounded);
+
+            let text = format!(
+                "This is a Ratzilla template.\n\
+             Press left and right to increment and decrement the counter respectively.\n",
+            );
+
+            let paragraph = Paragraph::new(text)
+                .block(block)
+                .fg(Color::White)
+                .bg(Color::Black)
+                .centered();
+
+            frame.render_widget(paragraph, frame.area());
+        }
+    }
+
+    fn handle_events(&self, key_event: KeyEvent) {
+        if self.current_screen == CurrentScreen::Demo {
+            let mut counter = self.counter.borrow_mut();
+            match key_event.code {
+                KeyCode::Left => *counter = counter.saturating_sub(1),
+                KeyCode::Right => *counter = counter.saturating_add(1),
                 _ => {}
             }
         }
-        // ANCHOR_END: event_poll
     }
 }
-// ANCHOR: run_app_all
-
-// ANCHOR_END: all

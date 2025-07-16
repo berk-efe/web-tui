@@ -1,5 +1,4 @@
-// ANCHOR: all
-use ratatui::{
+use ratzilla::ratatui::{
     Frame,
     layout::{Alignment, Constraint, Direction, Flex, Layout, Margin, Rect},
     style::{Color, Style, Stylize},
@@ -8,28 +7,34 @@ use ratatui::{
     widgets::{Block, Borders, Clear, List, ListItem, Padding, Paragraph, Wrap, block::Title},
 };
 
-use std::thread;
-use std::time::Duration;
 
 use crate::app::{App, CurrentScreen};
 use crate::helper::{FIRST_BOOT_TEXT_LIST, SECOND_BOOT_TEXT_LIST};
 
 // ANCHOR: method_sig
 pub fn ui(frame: &mut Frame, app: &mut App) {
+    
+    web_sys::console::log_1(&format!("Screen: {:?}, Index: {}, TextID: {}", 
+    app.current_screen as u8, app.boot_index, app.boot_text_id).into());
+
+    
     if let CurrentScreen::Start = &app.current_screen {
-        if app.boot_text_id == 0 {
-            thread::sleep(Duration::from_millis(rand::random_range(50..200)));
-        } else {
-            thread::sleep(Duration::from_millis(rand::random_range(1..5)));
+        app.frame_count += 1;
+
+        let advance_every = if app.boot_text_id == 0 { 15 } else { 5 };
+
+        if app.frame_count % advance_every == 0 {
+            if app.boot_index >= FIRST_BOOT_TEXT_LIST.len() - 1 && app.boot_text_id == 0 {
+                app.boot_text_id += 1;
+                app.boot_index = 0;
+            } else if app.boot_text_id == 1 && app.boot_index >= SECOND_BOOT_TEXT_LIST.len() - 1 {
+                app.current_screen = CurrentScreen::Main;
+            } else {
+                app.boot_index += 1;
+            }
+
         }
 
-        if app.boot_index >= FIRST_BOOT_TEXT_LIST.len() && app.boot_text_id == 0 {
-            app.boot_text_id += 1;
-            app.boot_index = 0;
-            thread::sleep(Duration::from_secs(2));
-        } else if app.boot_text_id == 1 && app.boot_index >= SECOND_BOOT_TEXT_LIST.len() {
-            app.current_screen = CurrentScreen::Main;
-        }
 
         let mut cur_boot_text: &[&str] = &FIRST_BOOT_TEXT_LIST;
 
@@ -37,26 +42,28 @@ pub fn ui(frame: &mut Frame, app: &mut App) {
             cur_boot_text = &SECOND_BOOT_TEXT_LIST;
         }
 
-        let view_height = frame.size().height as usize;
+        let view_height = frame.area().height as usize;
         let mut y_offset = 0 as u16;
 
         if app.boot_index >= view_height {
             y_offset += (app.boot_index - view_height) as u16;
         }
 
+        // Debug before rendering
+        web_sys::console::log_1(&format!("About to render: take({}) from array of length {}", 
+            app.boot_index + 1, cur_boot_text.len()).into());
+
         let par = Paragraph::new(
             cur_boot_text
                 .iter()
-                .enumerate()
-                .filter(|(i, _)| *i <= app.boot_index)
-                .map(|(_, e)| Line::from(*e))
+                .take(app.boot_index + 1)
+                .map(|e| Line::from(*e))
                 .collect::<Vec<_>>(),
         )
         .scroll((y_offset, 0));
 
         frame.render_widget(par, frame.area());
 
-        app.boot_index += 1;
         return;
     }
 

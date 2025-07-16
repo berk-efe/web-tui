@@ -1,18 +1,14 @@
 // ANCHOR: all
-use std::{error::Error, io, time::Duration};
+use std::{error::Error, io, time::Duration, thread};
 
-use ratatui::{
+use ratzilla::ratatui::{
     Terminal,
-    backend::{Backend, CrosstermBackend},
-    crossterm::{
-        event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind},
-        execute,
-        terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
-    },
+    backend::{Backend, },
     style::{Style, Stylize},
     text::{Line, Span, Text},
-    widgets::Paragraph,
 };
+
+use ratzilla::{DomBackend, WebRenderer};
 
 mod app;
 mod helper;
@@ -26,44 +22,16 @@ use crate::{
 // ANCHOR: main_all
 // ANCHOR: setup_boilerplate
 fn main() -> Result<(), Box<dyn Error>> {
-    // setup terminal
-    enable_raw_mode()?;
-    let mut stderr = io::stderr(); // This is a special case. Normally using stdout is fine
-    execute!(stderr, EnterAlternateScreen, EnableMouseCapture)?;
-    // ANCHOR_END: setup_boilerplate
-    // ANCHOR: application_startup
-    let backend = CrosstermBackend::new(stderr);
+    let backend = DomBackend::new()?;
     let mut terminal = Terminal::new(backend)?;
 
-    // create app and run it
     let mut app = App::new();
     let res = run_app(&mut terminal, &mut app);
-    // ANCHOR_END: application_startup
-
-    // ANCHOR: ending_boilerplate
-    // restore terminal
-    disable_raw_mode()?;
-    execute!(
-        terminal.backend_mut(),
-        LeaveAlternateScreen,
-        DisableMouseCapture
-    )?;
-    terminal.show_cursor()?;
-    // ANCHOR_END: ending_boilerplate
-
-    // ANCHOR: final_print
 
     Ok(())
 }
-// ANCHOR_END: final_print
-// ANCHOR_END: main_all
 
-// ANCHOR: run_app_all
-// ANCHOR: run_method_signature
 fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<bool> {
-    // ANCHOR_END: run_method_signature
-    // ANCHOR: ui_loop
-
     app.components = vec![
         // HOME
         //
@@ -103,10 +71,9 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
     loop {
         terminal.draw(|f| ui(f, app))?;
         // ANCHOR_END: ui_loop
+        thread::sleep(Duration::from_millis(16));
 
-        // ANCHOR: event_poll
-        // ANCHOR: main_screen
-        if event::poll(Duration::from_millis(0))? {
+/*         if event::poll(Duration::from_millis(0))? {
             if let Event::Key(key) = event::read()? {
                 if key.kind == event::KeyEventKind::Release {
                     // Skip events that are not KeyEventKind::Press
@@ -140,7 +107,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                     _ => {}
                 }
             }
-        }
+        } */
         // ANCHOR_END: event_poll
     }
 }

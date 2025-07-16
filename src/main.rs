@@ -66,7 +66,7 @@ struct App {
     counter: RefCell<u8>,
     current_screen: CurrentScreen,
 
-    sidebar_state: ListState,
+    sidebar_state: RefCell<ListState>,
 }
 
 impl App {
@@ -159,7 +159,18 @@ impl App {
     }
 
     fn handle_events(&self, key_event: KeyEvent) {
-        if self.current_screen == CurrentScreen::Demo {
+        if self.current_screen == CurrentScreen::Main {
+            let mut sidebar_state = self.sidebar_state.borrow_mut();
+            match key_event.code {
+                KeyCode::Up => sidebar_state.select_previous(),
+                KeyCode::Down => sidebar_state.select_next(),
+
+                KeyCode::Left => sidebar_state.select_first(),
+                KeyCode::Right => sidebar_state.select_last(),
+
+                _ => {}
+            }
+        } else if self.current_screen == CurrentScreen::Demo {
             let mut counter = self.counter.borrow_mut();
             match key_event.code {
                 KeyCode::Left => *counter = counter.saturating_sub(1),

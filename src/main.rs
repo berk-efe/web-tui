@@ -3,6 +3,7 @@ use ratzilla::{DomBackend, WebRenderer};
 use std::{cell::RefCell, io, rc::Rc};
 
 mod app;
+mod helper;
 mod ui;
 
 use app::App;

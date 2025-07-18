@@ -1,9 +1,10 @@
-use crate::app::App;
+use crate::app::{App, CurrentScreen};
 use ratatui::{
     layout::{Alignment, Constraint, Direction::*, Flex, Layout, Margin, Rect},
     style::{Color, Style, Stylize},
+    symbols::scrollbar,
     text::{Line, Text},
-    widgets::{Block, Borders, List, ListItem, Paragraph},
+    widgets::{Block, Borders, List, ListItem, Paragraph, Scrollbar, ScrollbarOrientation},
     Frame,
 };
 
@@ -17,6 +18,7 @@ pub fn render(app: &mut App, frame: &mut Frame) {
     render_background(frame, &areas);
     render_header(app, frame, areas.header);
     render_sidebar(app, frame, areas.sidebar);
+    render_footer(app, frame, areas.footer);
     render_main_content(app, frame, areas.main);
 }
 
@@ -108,9 +110,30 @@ fn render_main_content(app: &mut App, frame: &mut Frame, area: Rect) {
     frame.render_widget(block, area.inner(Margin::new(2, 0)));
 
     let cur_page_id = &app.sidebar_state.selected();
-    let main_par = &app.pages[cur_page_id.unwrap()].content;
+    let text = &app.pages[cur_page_id.unwrap()].content;
+    let main_par = Paragraph::new(text.clone()).scroll((app.vertical_scroll as u16, 0));
+    frame.render_stateful_widget(
+        Scrollbar::new(ScrollbarOrientation::VerticalRight)
+            .symbols(scrollbar::DOUBLE_VERTICAL)
+            .begin_symbol(None)
+            .track_symbol(Some("|"))
+            .end_symbol(None),
+        area.inner(Margin {
+            vertical: 1,
+            horizontal: 0,
+        }),
+        &mut app.vertical_scroll_state,
+    );
+
+    app.vertical_scroll_state = app.vertical_scroll_state.content_length(text.len() / 2);
 
     frame.render_widget(main_par, area.inner(Margin::new(2, 2)));
 }
 
-fn render_footer(app: &mut App, frame: &mut Frame, area: Rect) {}
+fn render_footer(app: &mut App, frame: &mut Frame, area: Rect) {
+    if app.current_screen == CurrentScreen::Main {
+        let par = Paragraph::new("\n  right-left keys: move around tabs. up-down keys scroll");
+
+        frame.render_widget(par, area);
+    }
+}

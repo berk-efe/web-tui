@@ -1,4 +1,4 @@
-use crate::app::{App, CurrentScreen};
+use crate::app::{App, CurrentPage, CurrentScreen};
 use ratatui::{
     layout::{Alignment, Constraint, Direction::*, Flex, Layout, Margin, Rect},
     style::{Color, Style, Stylize},
@@ -7,6 +7,8 @@ use ratatui::{
     widgets::{Block, Borders, List, ListItem, Paragraph, Scrollbar, ScrollbarOrientation},
     Frame,
 };
+
+use crate::ui::{about_me_page, home_page, projects_page};
 
 const BG_COLOR_0: Color = Color::Rgb(0, 19, 45);
 const BG_COLOR_1: Color = Color::Rgb(0, 38, 87);
@@ -37,8 +39,8 @@ fn create_layout(frame: &mut Frame) -> LayoutAreas {
     // Vertical layout
     let main_chunks = Layout::default()
         .direction(Vertical)
-        .vertical_margin(5)
-        .horizontal_margin(35)
+        .vertical_margin(1)
+        .horizontal_margin(15)
         .constraints([
             Constraint::Length(3),
             Constraint::Min(1),
@@ -109,30 +111,18 @@ fn render_main_content(app: &mut App, frame: &mut Frame, area: Rect) {
 
     frame.render_widget(block, area.inner(Margin::new(2, 0)));
 
-    let cur_page_id = &app.sidebar_state.selected();
-    let text = &app.pages[cur_page_id.unwrap()].content;
-    let main_par = Paragraph::new(text.clone()).scroll((app.vertical_scroll as u16, 0));
-    frame.render_stateful_widget(
-        Scrollbar::new(ScrollbarOrientation::VerticalRight)
-            .symbols(scrollbar::DOUBLE_VERTICAL)
-            .begin_symbol(None)
-            .track_symbol(Some("|"))
-            .end_symbol(None),
-        area.inner(Margin {
-            vertical: 1,
-            horizontal: 0,
-        }),
-        &mut app.vertical_scroll_state,
-    );
+    let cur_page = &app.pages[app.sidebar_state.selected().unwrap()];
 
-    app.vertical_scroll_state = app.vertical_scroll_state.content_length(text.len() / 2);
-
-    frame.render_widget(main_par, area.inner(Margin::new(2, 2)));
+    match cur_page.page_type {
+        CurrentPage::Home => home_page::render(app, frame, area),
+        CurrentPage::Projects => projects_page::render(app, frame, area),
+        CurrentPage::AboutMe => about_me_page::render(app, frame, area),
+    }
 }
 
 fn render_footer(app: &mut App, frame: &mut Frame, area: Rect) {
     if app.current_screen == CurrentScreen::Main {
-        let par = Paragraph::new("\n  right-left keys: move around tabs. up-down keys scroll");
+        let par = Paragraph::new("\n  up-down keys: move around tabs.");
 
         frame.render_widget(par, area);
     }

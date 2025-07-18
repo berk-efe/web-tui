@@ -27,7 +27,7 @@ fn main() -> io::Result<()> {
     Ok(())
 }
 
-impl<'a> App<'a> {
+impl App {
     fn render(&mut self, frame: &mut Frame) {
         ui::render(self, frame);
     }

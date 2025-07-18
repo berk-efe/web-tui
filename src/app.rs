@@ -14,24 +14,35 @@ pub enum CurrentScreen {
     Exiting,
 }
 
-pub struct Page<'a> {
-    pub title: String,
-    pub content: Vec<Line<'a>>,
+#[derive(PartialEq)]
+pub enum CurrentPage {
+    Home,
+    Projects,
+    AboutMe,
 }
 
-impl<'a> Page<'a> {
-    pub fn new(title: String, content: Vec<Line<'a>>) -> Self {
+pub struct Page {
+    pub title: String,
+    pub page_type: CurrentPage,
+}
+
+impl Page {
+    pub fn new(title: String, page_type: CurrentPage) -> Self {
         Self {
-            title,
-            content: content,
+            title: title,
+            page_type: page_type,
         }
     }
 }
 
-pub struct App<'a> {
+pub struct App {
     pub counter: u8,
     pub current_screen: CurrentScreen,
     pub sidebar_state: ListState,
+
+    pub current_page: CurrentPage,
+    pub pages: Vec<Page>,
+
     pub vertical_scroll_state: ScrollbarState,
     pub vertical_scroll: usize,
 
@@ -40,18 +51,27 @@ pub struct App<'a> {
     pub frame_count: usize,
 
     pub title: String,
-    pub pages: Vec<Page<'a>>,
 }
 
-impl<'a> Default for App<'a> {
+impl Default for App {
     fn default() -> Self {
         let mut sidebar_state = ListState::default();
         sidebar_state.select(Some(0));
 
+        let pages = vec![
+            Page::new("  Home".to_string(), CurrentPage::Home),
+            Page::new("  Projects".to_string(), CurrentPage::Projects),
+            Page::new("  About Me".to_string(), CurrentPage::AboutMe),
+        ];
+
         App {
             counter: 0,
-            current_screen: CurrentScreen::Start,
+            current_screen: CurrentScreen::Main,
             sidebar_state,
+
+            current_page: CurrentPage::Home,
+            pages: pages,
+
             vertical_scroll_state: ScrollbarState::default(),
             vertical_scroll: usize::default(),
 
@@ -60,150 +80,22 @@ impl<'a> Default for App<'a> {
             frame_count: usize::default(),
 
             title: String::from("\n  Berk Efe Keskin v1.0"),
-            pages: vec![
-                Page::new(
-                    String::from("  Home"),
-                    vec![
-                        Line::from(Span::styled("My Awesome App", Style::new().bold())),
-                        Line::from(""),
-                        Line::from("This application demonstrates how to build a "),
-                        Line::from("terminal UI using the ratatui crate.  The text "),
-                        Line::from("wraps automatically to the width of the block."),
-                        Line::from(""),
-                        Line::from(Span::styled("Features", Style::new().bold())),
-                        Line::from(""),
-                        Line::from("• Sidebar navigation"),
-                        Line::from("• Responsive layout"),
-                        Line::from(vec![
-                            Span::raw("• "),
-                            Span::styled("Rich text ", Style::new().bold()),
-                            Span::raw("with colours & styles"),
-                        ]),
-                        Line::from(""),
-                        Line::from("Scroll down to read more…"),
-                    ],
-                ),
-                Page::new(
-                    String::from("  Projects"),
-                    vec![
-                        Line::from(Span::styled("My Awesome App", Style::new().bold())),
-                        Line::from(""),
-                        Line::from("This application demonstrates how to build a "),
-                        Line::from("terminal UI using the ratatui crate.  The text "),
-                        Line::from("wraps automatically to the width of the block."),
-                        Line::from(""),
-                        Line::from(Span::styled("Features", Style::new().bold())),
-                        Line::from(""),
-                        Line::from("• Sidebar navigation"),
-                        Line::from("• Responsive layout"),
-                        Line::from(vec![
-                            Span::raw("• "),
-                            Span::styled("Rich text ", Style::new().bold()),
-                            Span::raw("with colours & styles"),
-                        ]),
-                        Line::from(""),
-                        Line::from("Scroll down to read more…"),
-                        Line::from(Span::styled("My Awesome App", Style::new().bold())),
-                        Line::from(""),
-                        Line::from("This application demonstrates how to build a "),
-                        Line::from("terminal UI using the ratatui crate.  The text "),
-                        Line::from("wraps automatically to the width of the block."),
-                        Line::from(""),
-                        Line::from(Span::styled("Features", Style::new().bold())),
-                        Line::from(""),
-                        Line::from("• Sidebar navigation"),
-                        Line::from("• Responsive layout"),
-                        Line::from(vec![
-                            Span::raw("• "),
-                            Span::styled("Rich text ", Style::new().bold()),
-                            Span::raw("with colours & styles"),
-                        ]),
-                        Line::from(""),
-                        Line::from(Span::styled("My Awesome App", Style::new().bold())),
-                        Line::from(""),
-                        Line::from("This application demonstrates how to build a "),
-                        Line::from("terminal UI using the ratatui crate.  The text "),
-                        Line::from("wraps automatically to the width of the block."),
-                        Line::from(""),
-                        Line::from(Span::styled("Features", Style::new().bold())),
-                        Line::from(""),
-                        Line::from("• Sidebar navigation"),
-                        Line::from("• Responsive layout"),
-                        Line::from(vec![
-                            Span::raw("• "),
-                            Span::styled("Rich text ", Style::new().bold()),
-                            Span::raw("with colours & styles"),
-                        ]),
-                        Line::from(""),
-                        Line::from("Scroll down to read more…"),
-                        Line::from(Span::styled("My Awesome App", Style::new().bold())),
-                        Line::from(""),
-                        Line::from("This application demonstrates how to build a "),
-                        Line::from("terminal UI using the ratatui crate.  The text "),
-                        Line::from("wraps automatically to the width of the block."),
-                        Line::from(""),
-                        Line::from(Span::styled("Features", Style::new().bold())),
-                        Line::from(""),
-                        Line::from("• Sidebar navigation"),
-                        Line::from("• Responsive layout"),
-                        Line::from(vec![
-                            Span::raw("• "),
-                            Span::styled("Rich text ", Style::new().bold()),
-                            Span::raw("with colours & styles"),
-                        ]),
-                        Line::from(""),
-                        Line::from("Scroll down to read more…"),
-                        Line::from("Scroll down to read more…"),
-                    ],
-                ),
-                Page::new(String::from("  ETC"), vec![Line::from("Hello")]),
-            ],
         }
     }
 }
 
-impl<'a> App<'a> {
+impl App {
     pub fn handle_events(&mut self, key_event: KeyEvent) {
         match self.current_screen {
             CurrentScreen::Main => match key_event.code {
                 KeyCode::Up => {
-                    if let Some(curr_page_id) = self.sidebar_state.selected() {
-                        let max_scroll = self.pages[curr_page_id].content.len() / 2;
-                        self.vertical_scroll = self.vertical_scroll.saturating_sub(1);
-
-                        if self.vertical_scroll > max_scroll {
-                            self.vertical_scroll = max_scroll;
-                        }
-
-                        self.vertical_scroll_state =
-                            self.vertical_scroll_state.position(self.vertical_scroll);
-                    }
-                }
-                KeyCode::Down => {
-                    if let Some(curr_page_id) = self.sidebar_state.selected() {
-                        let max_scroll = self.pages[curr_page_id].content.len() / 2;
-                        self.vertical_scroll = self.vertical_scroll.saturating_add(1);
-
-                        if self.vertical_scroll > max_scroll {
-                            self.vertical_scroll = max_scroll;
-                        }
-
-                        self.vertical_scroll_state =
-                            self.vertical_scroll_state.position(self.vertical_scroll);
-                    }
-                }
-                KeyCode::Left => {
-                    self.vertical_scroll = 0;
-                    self.vertical_scroll_state =
-                        self.vertical_scroll_state.position(self.vertical_scroll);
                     self.sidebar_state.select_previous();
                 }
-                KeyCode::Right => {
-                    self.vertical_scroll = 0;
-                    self.vertical_scroll_state =
-                        self.vertical_scroll_state.position(self.vertical_scroll);
+                KeyCode::Down => {
                     self.sidebar_state.select_next();
                 }
+                KeyCode::Left => {}
+                KeyCode::Right => {}
                 KeyCode::Char('d') => self.current_screen = CurrentScreen::Demo,
                 _ => {}
             },

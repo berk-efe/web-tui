@@ -1,3 +1,7 @@
+use std::error::Error;
+use std::process::{Command, Stdio};
+use std::{thread, time::Duration};
+
 use ratatui::{self, text::Span};
 
 pub const FIRST_BOOT_TEXT_LIST: [&str; 21] = [

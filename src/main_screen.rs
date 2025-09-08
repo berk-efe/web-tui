@@ -4,6 +4,7 @@ use ratatui::{
     widgets::{Block, BorderType, Borders, List, ListItem, Padding, Paragraph},
     Frame, Terminal,
 };
+use ratzilla::widgets::Hyperlink;
 
 use crate::{margin, App, CurrentPage};
 
@@ -37,7 +38,7 @@ pub fn render(app: &mut App, frame: &mut Frame, colors: Vec<Color>) {
 
     let main_layout = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints([Constraint::Length(35), Constraint::Fill(1)])
+        .constraints([Constraint::Length(25), Constraint::Fill(1)])
         .split(layout[1]);
 
     let sidebar_block = Block::default()
@@ -63,7 +64,20 @@ pub fn render(app: &mut App, frame: &mut Frame, colors: Vec<Color>) {
 
     let footer_area = layout[2].inner(margin!(2, 0));
 
-    let header_para = Paragraph::new(String::from("Berk Efe Keskin")).block(header_block);
+    let github_link: &str = "https://github.com/berk-efe/";
+
+    let header_layout = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Fill(2),
+            Constraint::Length(github_link.len() as u16),
+        ])
+        .split(header_block.inner(header_area));
+
+    frame.render_widget(header_block, header_area);
+
+    let header_para = Paragraph::new(String::from("Berk Efe Keskin"));
+    let header_git_link = Hyperlink::new(github_link);
 
     let mut sidebar_list_items: Vec<ListItem> = Vec::new();
 
@@ -76,7 +90,8 @@ pub fn render(app: &mut App, frame: &mut Frame, colors: Vec<Color>) {
     let sidebar_list =
         List::new(sidebar_list_items).highlight_style(Style::default().bg(colors[2]));
 
-    frame.render_widget(header_para, header_area);
+    frame.render_widget(header_para, header_layout[0]);
+    frame.render_widget(header_git_link, header_layout[1]);
     frame.render_stateful_widget(
         sidebar_list,
         main_layout[0].inner(margin!(0, 2)),

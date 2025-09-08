@@ -65,6 +65,7 @@ dependencies = [
  "ratzilla",
  "reqwest",
  "serde",
+ "serde_json",
  "wasm-bindgen-futures",
  "web-sys",
 ]

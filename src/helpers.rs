@@ -1,5 +1,3 @@
-use ratatui::{self, text::Span};
-
 pub const FIRST_BOOT_TEXT_LIST: [&str; 21] = [
     ":: running early hook [udev]",
     "Starting systemd-udevd version 257.7-1-arch",

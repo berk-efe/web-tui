@@ -1,14 +1,14 @@
 use ratatui::{
-    layout::{Alignment, Constraint, Direction, Layout, Margin},
+    layout::{Constraint, Direction, Layout},
     style::{Color, Style, Stylize},
-    widgets::{Block, BorderType, Borders, List, ListItem, Padding, Paragraph},
-    Frame, Terminal,
+    widgets::{Block, Borders, List, ListItem, Padding, Paragraph},
+    Frame,
 };
 use ratzilla::widgets::Hyperlink;
 
 use crate::{margin, App, CurrentPage};
 
-use crate::{about_me_page, home_page, projects_page};
+use crate::{about_me_page, home_page, projects_page, resources_page};
 
 pub fn render(app: &mut App, frame: &mut Frame, colors: Vec<Color>) {
     let _background = Block::default().borders(Borders::NONE).bg(colors[0]);
@@ -38,7 +38,7 @@ pub fn render(app: &mut App, frame: &mut Frame, colors: Vec<Color>) {
 
     let main_layout = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints([Constraint::Length(25), Constraint::Fill(1)])
+        .constraints([Constraint::Length(35), Constraint::Fill(1)])
         .split(layout[1]);
 
     let sidebar_block = Block::default()
@@ -117,6 +117,8 @@ pub fn render(app: &mut App, frame: &mut Frame, colors: Vec<Color>) {
             about_me_page::render(app, frame, content_area.inner(margin!(2, 1)), colors)
         }
 
-        _ => {}
+        CurrentPage::Resources => {
+            resources_page::render(app, frame, content_area.inner(margin!(2, 1)), colors);
+        }
     }
 }

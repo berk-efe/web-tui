@@ -1,6 +1,11 @@
 use std::{cell::RefCell, io, rc::Rc};
 
-use ratatui::{style::Color, text::Line, widgets::{ListState, Paragraph}, Frame, Terminal};
+use ratatui::{
+    style::Color,
+    text::Line,
+    widgets::{ListState, Paragraph},
+    Frame, Terminal,
+};
 
 use ratzilla::{
     event::{KeyCode, KeyEvent},
@@ -21,6 +26,7 @@ mod start_screen;
 mod about_me_page;
 mod home_page;
 mod projects_page;
+mod resources_page;
 
 mod helpers;
 
@@ -116,6 +122,7 @@ pub enum CurrentPage {
     Home,
     Projects,
     AboutMe,
+    Resources,
 }
 
 #[derive(Clone)]
@@ -162,6 +169,7 @@ impl Default for App {
             Page::new("    Home", CurrentPage::Home),
             Page::new("    Projects", CurrentPage::Projects),
             Page::new("    About Me", CurrentPage::AboutMe),
+            Page::new("    Resources", CurrentPage::Resources),
         ];
 
         Self {
@@ -173,7 +181,7 @@ impl Default for App {
             counter: u8::default(),
 
             sidebar_state: sidebar_state,
-            current_screen: CurrentScreen::default(),
+            current_screen: CurrentScreen::Main,
             current_page: CurrentPage::default(),
 
             pages: pages,
@@ -299,7 +307,7 @@ impl App {
 
     fn render_boot_screen(&mut self, frame: &mut Frame) {
         self.frame_count += 1;
-        let advance_every = if self.boot_text_id == 0 {8} else {1}; // frames to wait
+        let advance_every = if self.boot_text_id == 0 { 8 } else { 1 }; // frames to wait
 
         if self.frame_count % advance_every == 0 {
             if self.boot_index >= FIRST_BOOT_TEXT_LIST.len() && self.boot_text_id == 0 {
@@ -314,7 +322,7 @@ impl App {
             }
         }
 
-        let cur_boot_text: &[&str ] = if self.boot_text_id == 0 {
+        let cur_boot_text: &[&str] = if self.boot_text_id == 0 {
             &FIRST_BOOT_TEXT_LIST
         } else {
             &SECOND_BOOT_TEXT_LIST
@@ -339,9 +347,7 @@ impl App {
         .style(ratatui::style::Style::default().fg(Color::White));
 
         frame.render_widget(par, frame.area());
-
     }
-
 }
 
 async fn get_lates_repos_async() -> Result<Vec<GithubRepo>, reqwest::Error> {

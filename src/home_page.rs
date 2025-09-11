@@ -22,17 +22,19 @@ pub fn render(app: &mut App, frame: &mut Frame, rect: Rect, colors: Vec<Color>) 
         Line::from("\n"),
         Line::from("\n"),
 
-        Line::from("So... I like computers.").alignment(Alignment::Center),
-        Line::from("I have been learning programing for a while now. I often enjoy learning new languages, libraries, technologies and more!").alignment(Alignment::Center),
-        Line::from("If you enjoy tinkering, learning, and believe that it's not about the destination but the journey...").alignment(Alignment::Center),
-        Line::from("Please feel free to contact me.").alignment(Alignment::Center),
-
+        Line::from("So... I like computers.").alignment(Alignment::Left),
+        Line::from("I have been learning programing for a while now. I often enjoy learning new languages, libraries, technologies and more!").alignment(Alignment::Left),
+        Line::from("If you enjoy tinkering, learning, and believe that it's not about the destination but the journey...").alignment(Alignment::Left),
+        Line::from("Please feel free to have a chat with me.").alignment(Alignment::Left),
         Line::from("\n"),
-        Line::from("These are my latest pinned repos:").alignment(Alignment::Center),
+        Line::from("I love people who are passionate about what they are doing regardless what it is. (except war crimes, etc.)").alignment(Alignment::Left),
+        Line::from("I want to know more about you and what you are doing. I can even try my best to help if it's in my power.").alignment(Alignment::Left),
+        Line::from("\n"),
+        Line::from("Here, These are my latest pinned repos:").alignment(Alignment::Center),
 
     ]).wrap(Wrap { trim: true });
 
-    frame.render_widget(par, layout[0]);
+    frame.render_widget(par, layout[0].inner(margin!(5, 0)));
 
     let repos_layout = Layout::default()
         .direction(Direction::Horizontal)
